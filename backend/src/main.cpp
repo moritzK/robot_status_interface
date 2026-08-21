@@ -1,28 +1,23 @@
 #include "crow.h"
-#include <chrono>
+#include "crow/middlewares/cors.h"
+#include "vitals.hpp"
 
 // M1 scope: prove the toolchain + deploy loop works end to end.
-// Values are hardcoded here on purpose — M2 replaces this with real
-// system reads (uptime, CPU temp, etc). Don't add sensor code yet.
+// CORS is enabled now (even with no frontend yet) so M4's React app
+// can call this API without a same-origin surprise later.
 
 int main() {
-    crow::SimpleApp app;
+    crow::App<crow::CORSHandler> app;
 
-    const auto start_time = std::chrono::steady_clock::now();
+    auto& cors = app.get_middleware<crow::CORSHandler>();
+    cors
+        .global()
+        .origin("*")            // fine for local dev; tighten before any real deployment
+        .methods("GET"_method);
 
     CROW_ROUTE(app, "/api/vitals")
-    ([&start_time]() {
-        auto now = std::chrono::steady_clock::now();
-        auto uptime_sec = std::chrono::duration_cast<std::chrono::seconds>(
-            now - start_time
-        ).count();
-
-        crow::json::wvalue vitals;
-        vitals["status"] = "OK";
-        vitals["uptime_sec"] = uptime_sec;
-        vitals["source"] = "robot_status_interface (M1 stub)";
-
-        return vitals;
+    ([]() {
+        return vitals::get_vitals();
     });
 
     // 8080 avoids clashing with anything else running on the Pi during dev

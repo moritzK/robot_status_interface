@@ -27,7 +27,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Crow)
 
-add_executable(robot_status_server src/main.cpp)
+add_executable(robot_status_server
+  src/main.cpp
+  src/vitals.cpp
+)
 
 target_include_directories(robot_status_server PRIVATE include ${ASIO_INCLUDE_DIR})
 
